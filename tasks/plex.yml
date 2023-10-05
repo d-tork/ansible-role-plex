@@ -55,3 +55,10 @@
     name: plexmediaserver
     enabled: true
   notify: restart plex
+
+- name: Add Plex user to media group.
+  ansible.builtin.user:
+    name: plex
+    groups: [media]
+    append: true
+
