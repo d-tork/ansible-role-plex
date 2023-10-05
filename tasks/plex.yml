@@ -29,16 +29,17 @@
         name: apt-transport-https
         state: present
 
-    - name: Add Plex apt key (Ubuntu & Debian with systemd)
-      apt_key:
+    # based on https://stackoverflow.com/a/71384057
+    # TODO: update to newer DEB822 format in 2024
+    - name: Add Plex apt key (Debian).
+      ansible.builtin.get_url:
         url: https://downloads.plex.tv/plex-keys/PlexSign.key
-        state: present
+        dest: /etc/apt/keyrings/plex.asc
 
-    - name: Add Plex apt repo (Ubuntu & Debian with systemd)
-      apt_repository:
-        repo: deb https://downloads.plex.tv/repo/deb public main
+    - name: Add Plex apt repo (Debian).
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/plex.asc] https://downloads.plex.tv/repo/deb public main"
         state: present
-      changed_when: false
 
     - name: Apt install Plex
       apt:
