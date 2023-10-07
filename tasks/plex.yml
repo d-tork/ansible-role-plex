@@ -62,7 +62,7 @@
     - name: Apply Plex rules to UFW via profile in /etc/ufw/applications.d/.
       community.general.ufw:
         rule: allow
-        name: plexmediaserver
+        name: plexmediaserver-all
         state: reloaded
 
 - name: Autostart Plex and start service
