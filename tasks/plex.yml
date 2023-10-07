@@ -1,13 +1,15 @@
 ---
 - name: Install Yum on Fedora
-  dnf:
+  ansible.builtin.dnf:
     name: yum
     state: present
   when: ansible_distribution == 'Fedora'
 
-- block:
+- name: Install Plex for Redhat family.
+  when: ansible_os_family == "RedHat"
+  block:
     - name: Add Plex Yum repo
-      yum_repository:
+      ansible.builtin.yum_repository:
         name: plex
         description: Plex Yum Repository
         baseurl: https://downloads.plex.tv/repo/rpm/$basearch/
@@ -15,17 +17,17 @@
         gpgcheck: true
 
     - name: Yum install Plex
-      yum:
+      ansible.builtin.yum:
         name: plexmediaserver
         state: present
         update_cache: true
       notify: restart plex
 
-  when: ansible_os_family == "RedHat"
-
-- block:
+- name: Install Plex for Debian family.
+  when: ansible_os_family == "Debian"
+  block:
     - name: Install apt-transport-https
-      apt:
+      ansible.builtin.apt:
         name: apt-transport-https
         state: present
 
@@ -35,6 +37,7 @@
       ansible.builtin.get_url:
         url: https://downloads.plex.tv/plex-keys/PlexSign.key
         dest: /etc/apt/keyrings/plex.asc
+        mode: '0644'
 
     - name: Add Plex apt repo (Debian).
       ansible.builtin.apt_repository:
@@ -42,16 +45,28 @@
         state: present
 
     - name: Apt install Plex
-      apt:
+      ansible.builtin.apt:
         name: plexmediaserver
         state: present
         update_cache: true
       notify: restart plex
 
-  when: ansible_os_family == "Debian"
+- name: Allow Plex to local network.
+  block:
+    - name: Copy Plex UFW configuration to server.
+      ansible.builtin.copy:
+        src: files/plexmediaserver
+        dest: /etc/ufw/applications.d/plexmediaserver
+        mode: '0644'
+
+    - name: Apply Plex rules to UFW via profile in /etc/ufw/applications.d/.
+      community.general.ufw:
+        rule: allow
+        name: plexmediaserver
+        state: reloaded
 
 - name: Autostart Plex and start service
-  service:
+  ansible.builtin.service:
     name: plexmediaserver
     enabled: true
   notify: restart plex
@@ -61,4 +76,3 @@
     name: plex
     groups: [media]
     append: true
-
